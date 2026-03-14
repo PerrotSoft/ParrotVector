@@ -26,6 +26,7 @@ typedef void* (*VectorIdx_t)(struct Vector* self, uint64_t index);
 typedef void  (*VectorPush_t)(struct Vector* self, int32_t id, void* data);
 typedef void  (*VectorRem_t) (struct Vector* self, int32_t id);
 typedef void  (*VectorFree_t)(struct Vector* self);
+typedef uint8_t (*VectorSetId_t)(struct Vector* self, int32_t id, void* new_data);
 
 typedef struct Vector {
     VectorItem* items;
@@ -34,12 +35,21 @@ typedef struct Vector {
 
     VectorPush_t Push;
     VectorGet_t  GetById;
+    VectorSetId_t  SetById;
     VectorIdx_t  GetAt;
     VectorRem_t  Remove;
     VectorFree_t Clear;
 } Vector;
 
-
+static uint8_t _vSetId(Vector* self, int32_t id, void* new_data) {
+    for (uint64_t i = 0; i < self->size; i++) {
+        if (self->items[i].id == id) {
+            self->items[i].data = new_data;
+            return 1;
+        }
+    }
+    return 0; 
+}
 static void _vPush(Vector* self, int32_t id, void* data) {
     if (self->size >= self->capacity) {
         uint64_t new_cap = (self->capacity == 0) ? 4 : self->capacity * 2;
@@ -96,6 +106,7 @@ static inline void VectorInit(Vector* v, uint64_t initial_capacity) {
     v->GetAt   = _vGetIdx;
     v->Remove  = _vRem;
     v->Clear   = _vFree;
+    v->SetById = _vSetId;
 }
 
 #endif
